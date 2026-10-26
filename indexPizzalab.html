@@ -3,18 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FormLab</title>
+  <title>Pizza Lab</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>FormLab</h1>
-  <p>Learn how HTML forms work with PHP.</p>
+<h1>Pizza Lab</h1>
+<p>Make your practice pizza order.</p>
 
-  <form action="order.php" method="post">
-    <label for="name">Your name</label>
-    <input id="name" name="name" type="text" required>
+<form action="order.php" method="post">
+  <label for="customer">Chef name:</label>
+  <input id="customer" name="customer" required maxlength="40">
 
-    <button type="submit">Submit</button>
-  </form>
+  <br><br>
+  <label for="size">Pizza size:</label>
+  <select id="size" name="size" required>
+    <option value="small">Small</option>
+    <option value="medium">Medium</option>
+    <option value="large">Large</option>
+  </select>
+
+  <br><br>
+  <label for="quantity">Quantity (1–10):</label>
+  <input id="quantity" type="number" name="quantity"
+         min="1" max="10" value="1" required>
+
+  <fieldset>
+    <legend>Toppings (optional)</legend>
+    <label>
+      <input type="checkbox" name="toppings[]" value="pepperoni">
+      Pepperoni
+    </label>
+    <label>
+      <input type="checkbox" name="toppings[]" value="mushrooms">
+      Mushrooms
+    </label>
+    <label>
+      <input type="checkbox" name="toppings[]" value="peppers">
+      Peppers
+    </label>
+  </fieldset>
+
+  <br>
+  <label for="notes">Kitchen notes:</label>
+  <br>
+  <textarea id="notes" name="notes" maxlength="500"></textarea>
+
+  <br><br>
+  <button type="submit">Submit order</button>
+</form>
 </body>
-</html>

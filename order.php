@@ -1,103 +1,94 @@
 <?php
-declare(strict_types=1);
-
-function e(string $value): string {
-    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+function e($text) {
+    return htmlspecialchars((string) $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
 $errors = [];
-$clean = [];
-$practiceComplete = false; // TODO E: Set true only after completing B-D.
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    header('Allow: POST');
-    $errors[] = 'Open order.html and submit the form using POST.';
+    header('Location: indexPizzalab.html');
+    exit;
+}
+
+$customer = $_POST['customer'] ?? '';
+if (!is_string($customer) || trim($customer) === ''
+    || strlen(trim($customer)) > 40) {
+    $errors[] = 'Enter a chef name of 1–40 bytes.';
 } else {
-    $customer = $_POST['customer'] ?? null;
-    if (!is_string($customer) || trim($customer) === ''
-        || strlen(trim($customer)) > 40) {
-        $errors[] = 'Enter one chef name of 1-40 bytes.';
-    } else {
-        $clean['customer'] = trim($customer);
-    }
+    $customer = trim($customer);
+}
 
-    $size = $_POST['size'] ?? null;
-    if (!is_string($size) || !in_array($size, ['small', 'medium', 'large'], true)) {
-        $errors[] = 'Choose small, medium, or large.';
-    } else {
-        $clean['size'] = ucfirst($size);
-    }
+$size = $_POST['size'] ?? '';
+if (!is_string($size)
+    || !in_array($size, ['small', 'medium', 'large'], true)) {
+    $errors[] = 'Choose a valid pizza size.';
+}
 
-    // TODO B: Read and validate quantity; store an integer in $clean['quantity'].
+// B: Check quantity.
+$quantity = $_POST['quantity'] ?? '';
+if (!is_string($quantity)) {
+    $quantity = false;
+} else {
+    $quantity = filter_var($quantity, FILTER_VALIDATE_INT);
+}
+if ($quantity === false || $quantity < 1 || $quantity > 10) {
+    $errors[] = 'Quantity must be a whole number from 1 to 10.';
+}
 
-    // TODO C: Read and validate toppings; store a list in $clean['toppings'].
+// C: Check the optional toppings list.
+$toppings = $_POST['toppings'] ?? [];
+$allowed = ['pepperoni', 'mushrooms', 'peppers'];
 
-    // TODO D: Read and validate notes; store a string in $clean['notes'].
-
-    if (!$practiceComplete) {
-        $errors[] = 'Learning checkpoint: finish TODOs B-D, then enable TODO E.';
-    } elseif ($errors === []) {
-        foreach (['customer', 'size', 'quantity', 'toppings', 'notes'] as $key) {
-            if (!array_key_exists($key, $clean)) {
-                $errors[] = 'Finish the PHP processing block for: ' . $key;
-            }
+if (!is_array($toppings)) {
+    $errors[] = 'Invalid toppings.';
+} else {
+    foreach ($toppings as $topping) {
+        if (!is_string($topping)
+            || !in_array($topping, $allowed, true)) {
+            $errors[] = 'Choose toppings from the form.';
+            break;
         }
     }
-    if ($errors !== []) {
-        http_response_code(422);
-    }
+}
+
+// D: Check optional notes.
+$notes = $_POST['notes'] ?? '';
+if (!is_string($notes) || strlen($notes) > 500) {
+    $errors[] = 'Notes must be no more than 500 bytes.';
+} else {
+    $notes = trim($notes);
+}
+
+// E: All processing above is complete.
+if ($errors !== []) {
+    http_response_code(422);
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Campus Crust | Practice ticket</title>
-  <style>
-    body { font: 16px/1.6 system-ui, sans-serif; max-width: 650px; margin: 30px auto; padding: 20px; background: #faf5e9; color: #352b22; }
-    main { background: white; padding: 24px; border: 1px solid #ddcfb5; border-radius: 12px; }
-    li { margin: 10px 0; overflow-wrap: anywhere; }
-    .errors { color: #932d22; }
-    a { color: #a53d23; }
-  </style>
+  <title>Pizza ticket</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main>
 <?php if ($errors !== []): ?>
-  <h1>Almost ready, Chef!</h1>
-  <ul class="errors" role="alert">
+  <h1>Check your order</h1>
+  <ul>
     <?php foreach ($errors as $error): ?>
       <li><?= e($error) ?></li>
     <?php endforeach; ?>
   </ul>
 <?php else: ?>
-  <h1>Nice work, Chef <?= e($clean['customer']) ?>.</h1>
-  <h2>Your practice ticket</h2>
-  <ul>
-  <?php
-  $labels = [
-      'customer' => 'Chef name',
-      'size' => 'Pizza size',
-      'quantity' => 'Quantity',
-      'toppings' => 'Toppings',
-      'notes' => 'Kitchen note'
-  ];
-  foreach ($labels as $key => $label):
-      $value = $clean[$key];
-      if ($key === 'toppings') {
-          $value = $value === [] ? 'Plain cheese' : implode(', ', $value);
-      } elseif ($key === 'notes' && $value === '') {
-          $value = 'No special requests';
-      }
-  ?>
-    <li><strong><?= e($label) ?>:</strong> <?= e((string) $value) ?></li>
-  <?php endforeach; ?>
-  </ul>
-  <p>Practice complete. No order was saved, purchased, or sent to a kitchen.</p>
+  <h1>Your pizza ticket</h1>
+  <p>Chef: <?= e($customer) ?></p>
+  <p>Size: <?= e($size) ?></p>
+  <p>Quantity: <?= e($quantity) ?></p>
+  <p>Toppings: <?= e($toppings === [] ? 'Plain cheese' : implode(', ', $toppings)) ?></p>
+  <p>Notes: <?= e($notes === '' ? 'None' : $notes) ?></p>
+  <p>Practice only. No real order was placed.</p>
 <?php endif; ?>
-  <p><a href="order.html">Back to the pizza form</a></p>
-</main>
+
+<a href="indexPizzalab.html">Back to the pizza form</a>
 </body>
 </html>
